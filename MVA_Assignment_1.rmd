@@ -1,0 +1,44 @@
+---
+title: "MVA_Assignment 1"
+output: html_document
+date: "2024-02-11"
+---
+
+1. Ask an important question you want answered (1 at least) : 2 Points
+
+How does the unemployment rate vary among different age groups and genders across various countries?
+
+2. Answer why this question(s) is/are important to you: 2 Points
+
+Designing focused programs and measures to effectively address unemployment challenges requires an understanding of the differences in unemployment rates between age groups and genders. We can determine which age brackets are most susceptible to unemployment, evaluate potential causes of these differences, and create plans to advance fair employment opportunities by examining this data.
+
+3. Find and collect data (need one dependent variable and more than 3 dependent variables): 2 Points
+
+Dependent Variable: Unemployment Rate
+
+Independent Variables:
+
+Country Name
+
+Sex (Gender)
+
+Age Group
+
+Age Category
+
+4. Describe your data (create a data dictionary): 4 Points
+
+Dependent Variable: 
+
+Unemployment Rate: The percentage of unemployed individuals.
+
+Independent Variables:Country Name: The name of the country where the data is collected.
+
+Sex (Gender): The gender of individuals, categorized as male or female.
+
+Age Group: The grouping of individuals based on their age, such as under 15 years, 15-24 years, and 55+ years.
+
+Age Category: The broader categorization of age groups, such as children (15 years),youth (15-24 years), and adult (55+ years).
+
+
+
