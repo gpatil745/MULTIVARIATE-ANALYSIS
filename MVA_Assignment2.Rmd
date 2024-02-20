@@ -1,0 +1,86 @@
+---
+title: "MVA_Assignment_2"
+output: html_document
+---
+
+```{r}
+#1. How is the distribution of population across different age categories?
+#2. What is the age distribution across different countries?
+#3. How does the population change from 2022 to 2024 for different age groups across countries?
+#4. How does the population vary across different years, sexes, and age categories?
+  
+library(readr)
+unemployment <- read_csv("C:/Users/mumba/Documents/Global_Unemployment_Dataset.csv")
+
+# View the structure of the dataset
+str(unemployment)
+
+#View the summary of the dataset
+summary(unemployment)
+
+
+# Load required libraries
+library(ggplot2)
+library(dplyr)
+
+library(tidyr)
+library(dplyr)
+
+data_long <- unemployment %>%
+  pivot_longer(cols = c(`2022`, `2023`, `2024`), names_to = "Year", values_to = "Population")
+
+#Univariate Analysis
+# Plotting histograms for each age category
+ggplot(unemployment, aes(x = `2024`)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  facet_wrap(~ Age_categories, scales = "free_y") +
+  labs(title = "Population Distribution by Age Categories in 2024",
+       x = "Population", y = "Frequency")
+
+#Insight:
+#The histograms show the distribution of population for each age category in 2024.
+#We can observe the shape of the distribution and identify any potential outliers or unusual patterns.
+
+
+
+#Bivariate Analysis
+# Box plot for Age_categories by Country_name
+ggplot(unemployment, aes(x = Country_name, y = `2024`, fill = Age_categories)) +
+  geom_boxplot() +
+  labs(title = "Age Distribution Across Countries",
+       x = "Country",
+       y = "Population") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+#Insight: The age distribution varies across countries. Some countries have a more even distribution across age categories, while others have a more skewed distribution.
+
+
+#Multivariate Analysis
+# Create a scatterplot to visualize the population change from 2022 to 2024 for different age groups across countries
+ggplot(unemployment, aes(x = `2022`, y = `2024`, color = Age_categories)) +
+  geom_point() +
+  facet_wrap(~Country_name) +
+  labs(title = "Population Change from 2022 to 2024 by Age Groups Across Countries",
+       x = "Population in 2022", y = "Population in 2024")
+
+#Insight:
+#The population trends vary across years for both sexes and age categories.
+#Generally, there is an increasing trend in population over the years for all age categories and sexes, although the rate of increase differs.
+#Youth and adults typically have higher populations compared to children.
+#Males tend to have slightly higher populations compared to females across all age categories and years.
+
+
+# Create a line plot to show population trends across years by sex and age categories
+ggplot(data_long, aes(x = Year, y = Population, color = Sex, linetype = Age_categories)) +
+  geom_line() +
+  labs(title = "Population Trends Across Years by Sex and Age Categories",
+       x = "Year", y = "Population") +
+  scale_color_manual(values = c("blue", "red"), name = "Sex") +
+  scale_linetype_manual(values = c("solid", "dashed", "dotted"), name = "Age Categories") +
+  theme_minimal()
+#Insight: This visualization illustrates how the total population changes over the years (2022-2024) for each country, segmented by sex and age category. It provides insights into population dynamics, highlighting any significant trends or variations across different demographic groups and countries.
+
+
+```
+
