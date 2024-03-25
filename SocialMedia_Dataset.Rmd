@@ -1,0 +1,22 @@
+---
+title: "Social_Media_File"
+output: html_document
+date: "2024-03-25"
+---
+
+```{r}
+library(psych)
+library(readr)
+mva <- read.csv("C:/Users/mumba/Documents/Social_Media__Dataset.csv")
+mva <- mva[-1]
+
+
+#correlation matrix / class avg
+scale <- scale(mva)
+
+classcov <- cor(mva)
+classmean <- colMeans(mva)
+
+mvascale <- mahalanobis(mva, classmean, classcov)
+print(mvascale[1])
+```
