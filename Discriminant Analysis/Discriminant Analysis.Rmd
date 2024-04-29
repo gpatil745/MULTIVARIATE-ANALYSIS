@@ -1,0 +1,95 @@
+---
+title: "Discriminant Analysis"
+output: html_document
+date: "2024-04-23"
+---
+
+```{r}
+
+library(MASS)
+library(ggplot2)
+library(memisc)
+library(ROCR)
+library(dplyr)
+library(klaR)
+library(readr)
+
+attr <- read_csv("C:/Users/mumba/Documents/Global_Unemployment__Dataset.csv")
+attr
+str(attr)
+```
+
+```{r}
+# Check for NA values in each variable
+sapply(attr, function(x) any(is.na(x)))
+
+summary(attr)
+# Boxplot of Age_categories by Sex
+ggplot(attr, aes(x=Age_categories, y=year_2024, fill=Sex)) +
+  geom_boxplot() +
+  labs(title="Boxplot of tw by Age_categories and Sex")
+
+```
+It  shows differences across age groups and between sexes, with 'Youth' standing out as having both higher median values and greater variability. Additionally, the variable appears to affect females more than males in the 'Youth' and 'Adults' categories, based on the medians.
+
+1)Model Development
+```{r}
+# Train discriminant regression model
+discrim_model <- lda(Sex ~ ., data = attr)
+
+# Print summary of the model
+summary(discrim_model)
+```
+The dataset consists of demographic information for 60 entries across multiple countries, classified by sex and age categories. It spans a decade (2014-2024) and appears to track a numerical demographic variable—potentially a population count or a statistic related to population. The structure of the data indicates it could be used for time-series analysis, comparisons across groups, or understanding demographic trends.
+
+2) MODEL ACCEPTANCE
+
+```{r}
+# Perform discriminant regression
+discriminant_model <- lda(Sex ~ ., data=attr[, c(1:7)])
+
+# Summary of the model
+summary(discriminant_model)
+
+# Cross-validation
+cv_results <- MASS::lda(Sex ~ ., data=attr[, c(1:7)], CV=TRUE)
+cv_results$cv
+```
+3) RESIDUAL ANALYSIS
+
+```{r}
+# Residuals
+residuals <- cv_results$posterior[,2] - as.numeric(attr$Sex == "Female")
+
+# Histogram of residuals
+hist(residuals, breaks=20, col="skyblue", main="Histogram of Residuals", xlab="Residuals")
+
+# Diagnostic plots
+plot(discriminant_model)
+
+
+```
+The histograms represent the distribution of a standardized variable for two groups: Female and Male. The distributions are centered around zero, which is typical after standardization (z-score normalization). Both distributions show a similar spread and range, but the Female group has a more pronounced peak around zero, suggesting higher density of values in that region. There’s no indication of skewness for either group, and no outliers are apparent since the data clusters around the mean. 
+4) PREDICTED ANALYSIS
+
+```{r}
+# Predict using the model
+predictions <- predict(discriminant_model, attr)$class
+predictions
+
+
+# Confusion matrix
+conf_matrix <- table(attr$Sex, predictions)
+conf_matrix
+```
+5)MODEL ACCURACY
+
+```{r}
+
+# Calculate accuracy
+accuracy <- mean(predictions == attr$Sex)
+accuracy
+
+```
+
+The accuracy is 65%.
