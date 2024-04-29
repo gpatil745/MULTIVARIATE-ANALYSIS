@@ -1,0 +1,284 @@
+---
+title: "Global_Unemployment"
+author: "gp549@newark.rutgers.edu"
+date: "2024-04-28"
+output: html_document
+---
+'
+## Loading the Dataset
+
+```{r}
+library(readr)
+library(MVA)
+library(HSAUR2)
+library(SciViews)
+library(scatterplot3d)
+library(car)
+library(lattice)
+library(GGally)
+library(ggplot2)
+library(ggridges)
+library(ggvis)
+library(ggthemes)
+library(cowplot)
+library(gapminder)
+library(gganimate)
+library(dplyr)
+library(tidyverse)
+library(grid)
+library(gridExtra)
+library(RColorBrewer)
+library(Hotelling)
+library(stats)
+library(biotools)
+library(factoextra)
+library(FactoMineR)
+library(ggfortify)
+library(psych)
+library(corrplot)
+library(devtools)
+library(cluster)
+library(magrittr)
+library(NbClust)
+library(MASS)
+library(gvlma)
+library(leaps)
+library(relaimpo)
+library(e1071)
+library(pROC)
+library(memisc)
+library(ROCR)
+library(klaR)
+library(caret)
+library(caTools)
+
+data <- read_csv("C:/Users/mumba/Documents/Global_Unemployment__Dataset.csv")
+data
+
+attach(data)
+
+```
+
+* The dataset is obtained from Kaggle: 
+* It has 10 Countries, with Male and Female Gender, with various age group and age categories, and 3 years 2022,2023,2024 as 7 columns.
+
+## QUESTIONS
+
+#### Given the demographic information (Country, Sex, Age group), can we classify individuals into different countries based on their population distribution characteristics?
+
+#### Can we predict the change in population distribution for each demographic group (Country, Sex, Age group) from 2023 to 2024 based on historical trends from 2022 to 2023??
+
+## Analysing the Data
+
+```{r}
+str(data)
+```
+### Data Dictionary
+
+### Correlation Test
+
+```{r}
+
+# Identify numeric columns
+numeric_cols <- sapply(data, is.numeric)
+
+# Subset data to include only numeric columns
+numeric_data <- data[, numeric_cols]
+
+# Calculate correlation matrix
+cor <- cor(numeric_data)
+
+# Plot correlation matrix
+corrplot(cor, type = "upper", method = "color")
+```
+* The correlation matrix shows us that there is correlation between the columns.
+* Hence, Principal Component Analysis (PCA) can be used to reduce the number of columns for the analysis.
+
+## Principal Component Analysis (PCA)
+
+###PCA
+
+```{r}
+
+# Perform PCA
+data_pca <- prcomp(cor, scale. = TRUE)
+data_pca
+
+```
+### Scree diagram
+
+```{r}
+fviz_eig(data_pca, addlabels = TRUE)
+```
+* The scree diagram shows us that sum of the first 2 principal components is less than 70%.
+* So, we cannot move forward using PCA for column reduction.
+* We now move on to check Exploratory Factor Analysis (EFA).
+
+## Exploratory Factor Analysis (EFA)
+
+### EFA
+
+```{r}
+fit.pc <- principal(cor, nfactors=5, rotate="varimax")
+fa.diagram(fit.pc)
+```
+
+### Defining the factors obtained
+
+## Clustering
+
+### Distance matrix
+
+```{r}
+clg_dist <- get_dist(cor, stand = TRUE, method = "euclidean")
+```
+### Kmeans optimal clusters
+
+```{r}
+set.seed(123)
+efa_data <- as.data.frame(fit.pc$scores)
+matstd_data <- scale(cor)
+```
+
+* We scale the data to consider for identifying the optimal number of clusters.
+
+```{r}
+# Perform clustering using K-means
+set.seed(123)  # for reproducibility
+k <- 5  # number of clusters (you can adjust this)
+kmeans_result <- kmeans(cor, centers = k)
+
+# Visualize clustering
+fviz_cluster(kmeans_result, data = cor)
+
+# Get cluster centroids
+centroids <- as.data.frame(kmeans_result$centers)
+
+# Assign individuals to clusters
+cluster_assignments <- kmeans_result$cluster
+
+
+```
+
+### Reducing the existing variables and using factors for further analysis
+
+```{r}
+
+```
+
+
+```{r}
+
+# Calculate total within-cluster sum of squares (WCSS) for different values of k
+wcss <- numeric(10)
+for (i in 1:10) {
+  kmeans_model <- kmeans(cor, centers = i, nstart = 10)
+  wcss[i] <- kmeans_model$tot.withinss
+}
+
+# Plot the elbow curve
+plot(1:10, wcss, type = "b", xlab = "Number of Clusters (k)", ylab = "Within-cluster Sum of Squares (WCSS)",
+     main = "Elbow Method for Optimal k")
+
+```
+
+```{r}
+set.seed(1111)
+km.res <- kmeans(cor, 2, nstart = 25)
+# Visualize
+fviz_cluster(km.res, data = cor,
+             ellipse.type = "convex",
+             palette = "jco",
+             ggtheme = theme_minimal())
+
+```
+### Confusion Matrix & Accuracy
+
+```{r}
+# Assuming 'data$Age_categories' contains the true age categories from your dataset
+Actual <- factor(data$Age_categories, levels = c("Children", "Youth", "Adults"))
+
+# Assuming 'km.res$cluster' contains the predicted cluster assignments
+Predicted <- factor(ifelse(km.res$cluster == 1, "Children",
+                    ifelse(km.res$cluster == 2, "Youth", "Adults")),
+                    levels = c("Children", "Youth", "Adults"))
+Predicted <- rep(Predicted, length.out = length(Actual))
+
+# Create the confusion matrix
+confusion_mat <- table(Actual, Predicted)
+confusion_mat
+
+```
+
+```{r}
+accuracy <- sum(diag(confusion_mat)) / sum(confusion_mat)
+cat("Accuracy:", round(accuracy, 3), "\n")
+```
+## Logistic Regression
+
+```{r}
+str(data)
+```
+
+* The str function shows the data types of each of the variable
+* Here, we want to predict if the college is Public or Private based on the variables in other columns.
+* For this, we create a training and testing sets as below.
+
+### Defining training and testing sets
+
+
+
+```{r}
+
+
+colnames(data)
+# Assuming your dataframe is named 'data'
+data$High_Risk <- ifelse(data$year_2024 >= 10, 1, 0)
+
+# Fit logistic regression model
+logit_model <- glm(High_Risk ~ . - Country_name - Age_group - Age_categories - year_2014 - year_2015 - year_2016 - year_2017 - year_2018 - year_2019 - year_2020 - year_2021 - year_2022 - year_2023 - High_Risk, data = data, family = "binomial")
+
+# Summary of the model
+summary(logit_model)
+```
+
+
+```{r}
+set.seed(12345)
+probabilities <- predict(logit_model, newdata = data, type = "response")
+
+predicted <- ifelse(probabilities > 0.5, "Yes", "No")
+actual <- ifelse(data$High_Risk == 1, "Yes", "No")
+conf_matrix <- table(predicted, actual)
+conf_matrix
+
+```
+
+* The confusion matrix is obtained to test our prediction based on the regression.
+
+```{r}
+# Calculate accuracy
+accuracy <- sum(diag(conf_matrix)) / sum(conf_matrix)
+print(paste("Accuracy:", accuracy))
+```
+
+* We can see that our prediction is very accurate (94%) and precise (97%).
+* We further check the ROC curve.
+
+### ROC and AUC
+
+```{r}
+roc <- roc(data$High_Risk, probabilities)
+auc <- auc(roc)
+auc
+```
+```{r}
+ggroc(roc, color = "blue", legacy.axes = TRUE) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "False Positive Rate", y = "True Positive Rate",
+       title = paste("ROC Curve (AUC = ", round(auc, 2), ")")) +
+  annotate("text", x = 0.5, y = 0.5, label = paste0("AUC = ", round(auc, 2)))
+```
+
