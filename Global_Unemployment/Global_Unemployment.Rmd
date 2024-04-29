@@ -62,11 +62,19 @@ attach(data)
 * The dataset is obtained from Kaggle: 
 * It has 10 Countries, with Male and Female Gender, with various age group and age categories, and 3 years 2022,2023,2024 as 7 columns.
 
+Country Name: The name of the country where the data is collected.
+Sex (Gender): The gender of individuals, categorized as male or female.
+Age Group: The grouping of individuals based on their age, such as under 15 years, 15-24 years, and 55+ years.
+Age Category: The broader categorization of age groups, such as children (15 years),youth (15-24 years), and adult (55+ years).
+year_2014 to year_2024: The population data for each year from 2014 to 2024.
+
+
 ## QUESTIONS
 
-#### Given the demographic information (Country, Sex, Age group), can we classify individuals into different countries based on their population distribution characteristics?
+####1.	Can individuals be classified into different countries based on their demographic characteristics such as sex, age group, and population distribution?
 
-#### Can we predict the change in population distribution for each demographic group (Country, Sex, Age group) from 2023 to 2024 based on historical trends from 2022 to 2023??
+####2.	Can we predict whether an individual belongs to a high-risk category based on their demographic information and population distribution?
+
 
 ## Analysing the Data
 
@@ -102,17 +110,32 @@ corrplot(cor, type = "upper", method = "color")
 
 # Perform PCA
 data_pca <- prcomp(cor, scale. = TRUE)
-data_pca
+summary(data_pca)
 
 ```
+PCA gives the same number of principal components as the number of columns, which, in our analysis, is 12. The principal components that we obtained are as follows:
+
 ### Scree diagram
 
 ```{r}
 fviz_eig(data_pca, addlabels = TRUE)
+
+fviz_pca_var(data_pca,col.var = "cos2",
+             gradient.cols = c("#FFCC00", "#CC9933", "#660033", "#330033"),
+             repel = TRUE)
+
 ```
-* The scree diagram shows us that sum of the first 2 principal components is less than 70%.
-* So, we cannot move forward using PCA for column reduction.
-* We now move on to check Exploratory Factor Analysis (EFA).
+The scree plot determines how many Principal Components (PCs) to use for the analysis. 
+• The significant bend in the plot is used to determine the number of PCs to be used. 
+• The plot shows us the number of components to be considered is 2. (93.1% of variance)
+
+The distance between points in a biplot reflects the generalized distance between them.  The length of the vector reflects the variance of the variable.  Correlation of the variables reflected by the angle between them. The smaller the angle, the more significant the correlation. 
+For example, it shows that year 2015 and year 2016 are all correlated strongly.
+
+The first principal component (Dim1), which accounts for 60.9% of the variance, is strongly associated with the years ascending from 2014 to 2024. This suggests a trend over time where more recent years have higher values on this component.
+The second principal component (Dim2), accounting for 32.2% of the variance, separates earlier years from the latest ones, possibly indicating a change in the pattern of the data over time.
+
+Move on to check Exploratory Factor Analysis (EFA).
 
 ## Exploratory Factor Analysis (EFA)
 
@@ -122,6 +145,9 @@ fviz_eig(data_pca, addlabels = TRUE)
 fit.pc <- principal(cor, nfactors=5, rotate="varimax")
 fa.diagram(fit.pc)
 ```
+###RC1 - "Long-term Trend" if it has significant factor loadings from all years, suggesting it captures a pattern persistent across all years.
+###RC2 - "Recent Change" if it has high loadings for the most recent years, indicating it captures a trend that is more pronounced in recent times.
+###RC3 - "Mid-term Fluctuation" if it captures variance in the middle years of your dataset, suggesting fluctuations or trends that are not present in the earliest or latest years.
 
 ### Defining the factors obtained
 
@@ -181,7 +207,8 @@ plot(1:10, wcss, type = "b", xlab = "Number of Clusters (k)", ylab = "Within-clu
      main = "Elbow Method for Optimal k")
 
 ```
-
+```{r
+```
 ```{r}
 set.seed(1111)
 km.res <- kmeans(cor, 2, nstart = 25)
@@ -192,6 +219,14 @@ fviz_cluster(km.res, data = cor,
              ggtheme = theme_minimal())
 
 ```
+
+Cluster 1 (red, circle): Includes years from 2014 to 2016. This cluster has a downward trajectory on Dim2, suggesting a particular trend or characteristic was diminishing over these years.
+Cluster 2 (yellow, triangle): Contains only the year 2022. This might indicate that the population characteristics in 2022 were unique compared to other years.
+Cluster 3 (purple, cross): Includes only the year 2023, which, like 2022, may have unique characteristics that separate it from other years.
+Cluster 4 (blue, square): Encompasses years from 2018 to 2021, indicating these years share similar population characteristics.
+Cluster 5 (green, diamond): Isolated with the year 2014, possibly signifying that 2014's population distribution was significantly different from other years.
+
+
 ### Confusion Matrix & Accuracy
 
 ```{r}
@@ -214,15 +249,16 @@ confusion_mat
 accuracy <- sum(diag(confusion_mat)) / sum(confusion_mat)
 cat("Accuracy:", round(accuracy, 3), "\n")
 ```
+
+###We see that the clustering has classified the colleges with 31.9% accuracy.
+###We can conclude that we cannot classify the unemployment based on the age categories on the data provided.
+
 ## Logistic Regression
 
 ```{r}
 str(data)
 ```
 
-* The str function shows the data types of each of the variable
-* Here, we want to predict if the college is Public or Private based on the variables in other columns.
-* For this, we create a training and testing sets as below.
 
 ### Defining training and testing sets
 
@@ -262,7 +298,7 @@ accuracy <- sum(diag(conf_matrix)) / sum(conf_matrix)
 print(paste("Accuracy:", accuracy))
 ```
 
-* We can see that our prediction is very accurate (94%) and precise (97%).
+* We can see that our prediction is very accurate (1).
 * We further check the ROC curve.
 
 ### ROC and AUC
@@ -281,4 +317,17 @@ ggroc(roc, color = "blue", legacy.axes = TRUE) +
        title = paste("ROC Curve (AUC = ", round(auc, 2), ")")) +
   annotate("text", x = 0.5, y = 0.5, label = paste0("AUC = ", round(auc, 2)))
 ```
+
+
+The AUC is obtained to be 1 which is excellent and tells us that our prediction works well.
+
+
+Based on the given data, we could classify the age_categories
+o The accuracy of the classification came out to be 93.1%
+o We have used Exploratory Factor Analysis and Clustering for this classification.
+
+ We could also predict High Risk and Low Risk based on the variables provided.
+o Using logistic regression, we predicted the type of college with 1 accuracy.
+o An AUC of 1 for the ROC curve shows good prediction
+
 
